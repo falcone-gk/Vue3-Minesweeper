@@ -1,17 +1,45 @@
 <template>
   <div class="gameboard" :style="gameboardStyle">
-    <div class="box" v-for="index in store.getters.totalCells" :key="index"></div>
+    <div
+    v-for="index in store.getters.totalCells"
+    class="box"
+    :class="{shown: gameGrid[index-1].isShown}"
+    @click.prevent="clickCell(index-1)"
+    :key="index">
+      <span v-if="gameGrid[index-1].isShown" :style="colorStyle(index-1)">{{ gameGrid[index-1].value }}</span>
+    </div>
   </div>
   <button @click.prevent="goToSetup">Configuración</button>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
+import rangeRandomSample from '../common/RandomSample'
+import getAllPossibleDirections from '../common/Directions'
+
+interface cellState {
+  isShown: boolean;
+  value: string;
+  isFlagged: boolean;
+}
 
 const store = useStore()
 const numRows = computed(() => store.getters.getNumRows)
 const numCols = computed(() => store.getters.getNumCols)
+const defaultCellState: cellState = {
+  isShown: false,
+  value: "",
+  isFlagged: false,
+}
+const colors: string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
+
+const indexBombs: number[] = rangeRandomSample(store.getters.totalCells, store.getters.getNumBombs)
+const gameGrid = ref<cellState[]>(Array(numRows.value * numCols.value).fill(undefined).map(() => {
+  // Using expansion when giving default object because when changing una key value it will
+  // change every key with the same value, so we the solution is using expansion to make a copy.
+  return {...defaultCellState};
+}))
 
 const gameboardStyle = computed(() => {
   return {
@@ -26,7 +54,49 @@ const gameboardStyle = computed(() => {
   }
 )
 
+const colorStyle = (index: number) => {
+  const cellValue: number = parseInt(gameGrid.value[index].value)
+  return {color: colors[cellValue-1]}
+}
+
 const goToSetup = () => store.commit('setNewPage', 'settings')
+const clickCell = (boxIndex: number) => {
+  gameGrid.value[boxIndex].isShown = true;
+}
+
+const setNewGame = () => {
+  const emptyGrid = Array(numRows.value * numCols.value).fill(undefined).map(() => {
+  // Using expansion when giving default object because when changing una key value it will
+  // change every key with the same value, so we the solution is using expansion to make a copy.
+  return {...defaultCellState};
+  })
+
+  // Basically to hide every cell that has been shown and clean bombs index
+  gameGrid.value = emptyGrid
+  indexBombs.forEach((index) => {
+    // Getting bombs cords from index value in bombsArray.
+    gameGrid.value[index].value = "💣";
+
+    // Sum one to each box near a bomb.
+    const nearCells: number[] = getAllPossibleDirections(
+      index,
+      numRows.value,
+      numCols.value
+    );
+    nearCells.forEach((cords) => {
+      let nearValue: string = gameGrid.value[cords].value;
+      // Avoid box that are bombs
+      if (nearValue !== "💣") {
+        // If it's the first time the box is used we set to '0'.
+        if (nearValue === "") {
+          nearValue = "0";
+        }
+        gameGrid.value[cords].value = `${parseInt(nearValue) + 1}`;
+      }
+    });
+  });
+}
+setNewGame()
 
 </script>
 <style scoped>
@@ -53,7 +123,7 @@ const goToSetup = () => store.commit('setNewPage', 'settings')
     font-size: 0.75rem;
     text-align: center;
 }
-.box.boxShown::after {
+.box.shown::after {
     display: none;
 }
 .box:active::after {

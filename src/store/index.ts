@@ -40,6 +40,9 @@ export default createStore<StoreType>({
     getNumCols: (state: StoreType): number => {
       return state.settings.cols
     },
+    getNumBombs: (state: StoreType): number => {
+      return state.settings.bombs
+    },
     totalCells: (state: StoreType): number => {
       return state.settings.cols * state.settings.rows
     },
