@@ -3,8 +3,9 @@
     <div
     v-for="index in store.getters.totalCells"
     class="box"
-    :class="{shown: gameGrid[index-1].isShown}"
-    @click.prevent="clickCell(index-1)"
+    :class="{shown: gameGrid[index-1].isShown, flagged: gameGrid[index-1].isFlagged}"
+    @click.prevent="propagationClick(index-1)"
+    @contextmenu.prevent="rightClick(index-1)"
     :key="index">
       <span v-if="gameGrid[index-1].isShown" :style="colorStyle(index-1)">{{ gameGrid[index-1].value }}</span>
     </div>
@@ -60,9 +61,33 @@ const colorStyle = (index: number) => {
 }
 
 const goToSetup = () => store.commit('setNewPage', 'settings')
-const clickCell = (boxIndex: number) => {
-  gameGrid.value[boxIndex].isShown = true;
+const rightClick = (index: number) => {
+  gameGrid.value[index].isFlagged = !gameGrid.value[index].isFlagged
 }
+const propagationClick = (index: number): void => {
+
+  if (gameGrid.value[index].isFlagged) return
+
+  let boxMapped: number[] = [index];
+  let i = 0;
+  do {
+    const currentCell: number = boxMapped[i]
+    if (gameGrid.value[currentCell].value === "") {
+      const nearCells: number[] = getAllPossibleDirections(currentCell, numRows.value,numCols.value).filter((c) => {
+        // Check if near box is already mapped
+        const alreadyMapped: boolean = boxMapped.some(
+          (ind) => ind === c
+        );
+        return !alreadyMapped && !gameGrid.value[c].isFlagged;
+      });
+      boxMapped.push(...nearCells);
+    }
+    i++;
+  } while (i < boxMapped.length);
+  boxMapped.forEach((index) => {
+    gameGrid.value[index].isShown = true
+  });
+};
 
 const setNewGame = () => {
   const emptyGrid = Array(numRows.value * numCols.value).fill(undefined).map(() => {
@@ -74,7 +99,7 @@ const setNewGame = () => {
   // Basically to hide every cell that has been shown and clean bombs index
   gameGrid.value = emptyGrid
   indexBombs.forEach((index) => {
-    // Getting bombs cords from index value in bombsArray.
+    // Getting bombs coords from index value in bombsArray.
     gameGrid.value[index].value = "💣";
 
     // Sum one to each box near a bomb.
@@ -83,15 +108,15 @@ const setNewGame = () => {
       numRows.value,
       numCols.value
     );
-    nearCells.forEach((cords) => {
-      let nearValue: string = gameGrid.value[cords].value;
+    nearCells.forEach((cellIndex) => {
+      let nearValue: string = gameGrid.value[cellIndex].value;
       // Avoid box that are bombs
       if (nearValue !== "💣") {
         // If it's the first time the box is used we set to '0'.
         if (nearValue === "") {
           nearValue = "0";
         }
-        gameGrid.value[cords].value = `${parseInt(nearValue) + 1}`;
+        gameGrid.value[cellIndex].value = `${parseInt(nearValue) + 1}`;
       }
     });
   });
@@ -122,6 +147,9 @@ setNewGame()
     border: 2px outset #ececec;
     font-size: 0.75rem;
     text-align: center;
+}
+.flagged::after {
+  content: "🚩";
 }
 .box.shown::after {
     display: none;
