@@ -3,20 +3,20 @@
     <div class="menu">
       <div class="bar">
         <div class="digital-number">
-          0{{ store.getters.getNumBombs }}
+          {{ bombsMenu }}
         </div>
-        <div @click.prevent="setNewGame" class="reset">😃</div>
+        <div @click.prevent="setNewGame" class="reset">{{ menuIcon[gameStatus] }}</div>
         <div class="digital-number">
           000
         </div>
       </div>
     </div>
-    <div class="gameboard" :style="gameboardStyle">
+    <div class="gameboard" :class="{'game-disabled': gameStatus !== 'playing'}" :style="gameboardStyle">
       <div
       v-for="index in store.getters.totalCells"
       class="box"
       :class="{shown: gameGrid[index-1].isShown, flagged: gameGrid[index-1].isFlagged}"
-      @click.prevent="propagationClick(index-1)"
+      @click.prevent="onClick(index-1)"
       @contextmenu.prevent="rightClick(index-1)"
       :key="index">
         <span v-if="gameGrid[index-1].isShown" :style="colorStyle(index-1)">{{ gameGrid[index-1].value }}</span>
@@ -39,25 +39,36 @@ interface cellState {
 }
 
 const store = useStore()
-const numRows = computed(() => store.getters.getNumRows)
-const numCols = computed(() => store.getters.getNumCols)
+const numRows = store.getters.getNumRows
+const numCols = store.getters.getNumCols
+const numBombs = store.getters.getNumBombs
 const defaultCellState: cellState = {
   isShown: false,
   value: "",
   isFlagged: false,
 }
+
 const colors: string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
 
-const gameGrid = ref<cellState[]>(Array(numRows.value * numCols.value).fill(undefined).map(() => {
+const gameStatus = ref<'playing'|'lost'|'winner'>('playing')
+const menuIcon: {[key: string]: string} = {
+  'playing': '😃',
+  'lost': '💀',
+  'winner': '😎'
+}
+
+const gameGrid = ref<cellState[]>(Array(numRows * numCols).fill(undefined).map(() => {
   // Using expansion when giving default object because when changing una key value it will
   // change every key with the same value, so we the solution is using expansion to make a copy.
   return {...defaultCellState};
 }))
 
+const indexBombs = ref<number[]>([])
+
 const gameboardStyle = computed(() => {
   return {
     display: 'grid',
-    "grid-template": `repeat(${numRows.value}, 1fr) / repeat(${numCols.value}, 1fr)`,
+    "grid-template": `repeat(${numRows}, 1fr) / repeat(${numCols}, 1fr)`,
     margin: "0 auto",
     width: "max-content",
     height: "max-content",
@@ -72,20 +83,36 @@ const colorStyle = (index: number) => {
   return {color: colors[cellValue-1]}
 }
 
+// Bombs left to use as value in the game
+const bombsLeft = computed(() => {
+  const cellsFlagged: number = gameGrid.value.filter((obj) => obj.isFlagged).length
+  const bombsLeft: number = numBombs - cellsFlagged
+  return bombsLeft
+})
+
+// Bombs left value to show in the menu
+const bombsMenu = computed(() => {
+  return String(bombsLeft.value).padStart(3, '0')
+})
+
 const goToSetup = () => store.commit('setNewPage', 'settings')
 const rightClick = (index: number) => {
-  gameGrid.value[index].isFlagged = !gameGrid.value[index].isFlagged
+  const getFlagged: boolean = gameGrid.value[index].isFlagged
+
+  // Stop flagging when bombs flagged is already the same as bombs number
+  // And when the right is done in a cell flagged
+  if (bombsLeft.value <= 0 && !getFlagged) return
+
+  gameGrid.value[index].isFlagged = !getFlagged
 }
 const propagationClick = (index: number): void => {
-
-  if (gameGrid.value[index].isFlagged) return
 
   let boxMapped: number[] = [index];
   let i = 0;
   do {
     const currentCell: number = boxMapped[i]
     if (gameGrid.value[currentCell].value === "") {
-      const nearCells: number[] = getAllPossibleDirections(currentCell, numRows.value,numCols.value).filter((c) => {
+      const nearCells: number[] = getAllPossibleDirections(currentCell, numRows, numCols).filter((c) => {
         // Check if near box is already mapped
         const alreadyMapped: boolean = boxMapped.some(
           (ind) => ind === c
@@ -101,27 +128,50 @@ const propagationClick = (index: number): void => {
   });
 };
 
+const wonEvent = () => {
+  const cellsNotShown: number = gameGrid.value.filter((obj) => !obj.isShown).length
+  if (cellsNotShown === numBombs) {
+    gameStatus.value = 'winner'
+  }
+}
+const lostEvent = (): void => {
+  gameStatus.value = 'lost'
+  indexBombs.value.forEach((ind) => gameGrid.value[ind].isShown = true)
+}
+
+const onClick = (index: number): void => {
+  if (gameGrid.value[index].isFlagged) return
+  else if (gameGrid.value[index].value === '💣') {
+    lostEvent()
+    return
+  } else {
+    propagationClick(index)
+  }
+  wonEvent()
+}
+
 const setNewGame = () => {
-  const emptyGrid = Array(numRows.value * numCols.value).fill(undefined).map(() => {
+  gameStatus.value = 'playing'
+  const emptyGrid = Array(numRows * numCols).fill(undefined).map(() => {
   // Using expansion when giving default object because when changing una key value it will
   // change every key with the same value, so we the solution is using expansion to make a copy.
   return {...defaultCellState};
   })
 
   // Getting new indexes for bombs when starting a new game
-  const indexBombs: number[] = rangeRandomSample(store.getters.totalCells, store.getters.getNumBombs)
+  indexBombs.value = rangeRandomSample(store.getters.totalCells, numBombs)
 
   // Basically to hide every cell that has been shown and clean bombs index
   gameGrid.value = emptyGrid
-  indexBombs.forEach((index) => {
+  indexBombs.value.forEach((index) => {
     // Getting bombs coords from index value in bombsArray.
     gameGrid.value[index].value = "💣";
 
     // Sum one to each box near a bomb.
     const nearCells: number[] = getAllPossibleDirections(
       index,
-      numRows.value,
-      numCols.value
+      numRows,
+      numCols
     );
     nearCells.forEach((cellIndex) => {
       let nearValue: string = gameGrid.value[cellIndex].value;
@@ -196,6 +246,9 @@ setNewGame()
   padding: 4px 4px 0 7px;
   line-height: 1em;
 }
+.game-disabled {
+  pointer-events: none;
+}
 .box {
   display: flex;
   align-items: center;
@@ -221,6 +274,7 @@ setNewGame()
 }
 .flagged::after {
   content: "🚩";
+  font-size: 15px;
 }
 .box.shown::after {
     display: none;
