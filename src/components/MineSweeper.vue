@@ -48,7 +48,8 @@ const defaultCellState: cellState = {
   isFlagged: false,
 }
 
-const colors: string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
+// Colors for numbers in cells
+const colors:string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
 
 const gameStatus = ref<'playing'|'lost'|'winner'>('playing')
 const menuIcon: {[key: string]: string} = {
@@ -78,6 +79,7 @@ const gameboardStyle = computed(() => {
   }
 )
 
+// Style to give color format depending on number value
 const colorStyle = (index: number) => {
   const cellValue: number = parseInt(gameGrid.value[index].value)
   return {color: colors[cellValue-1]}
@@ -99,8 +101,8 @@ const goToSetup = () => store.commit('setNewPage', 'settings')
 const rightClick = (index: number) => {
   const getFlagged: boolean = gameGrid.value[index].isFlagged
 
-  // Stop flagging when bombs flagged is already the same as bombs number
-  // And when the right is done in a cell flagged
+  // Stop flagging when bombs flagged are already the same as bombs number
+  // And when the right click is done in a cell already flagged
   if (bombsLeft.value <= 0 && !getFlagged) return
 
   gameGrid.value[index].isFlagged = !getFlagged
@@ -140,8 +142,9 @@ const lostEvent = (): void => {
 }
 
 const onClick = (index: number): void => {
-  if (gameGrid.value[index].isFlagged) return
-  else if (gameGrid.value[index].value === '💣') {
+  if (gameGrid.value[index].isFlagged) {
+    return
+  } else if (gameGrid.value[index].value === '💣') {
     lostEvent()
     return
   } else {
