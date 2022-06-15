@@ -7,11 +7,14 @@
         </div>
         <div @click.prevent="setNewGame" class="reset">{{ menuIcon[gameStatus] }}</div>
         <div class="digital-number">
-          000
+          {{ String(counter).padStart(3, '0') }}
         </div>
       </div>
     </div>
-    <div class="gameboard" :class="{'game-disabled': gameStatus !== 'playing'}" :style="gameboardStyle">
+    <div
+    class="gameboard"
+    :class="{'game-disabled': gameStatus === 'lost' || gameStatus === 'winner'}"
+    :style="gameboardStyle">
       <div
       v-for="index in store.getters.totalCells"
       class="box"
@@ -42,6 +45,11 @@ const store = useStore()
 const numRows = store.getters.getNumRows
 const numCols = store.getters.getNumCols
 const numBombs = store.getters.getNumBombs
+
+// Chronometer elements
+const counter = ref<number>(0)
+let timerId: ReturnType<typeof setTimeout>;
+
 const defaultCellState: cellState = {
   isShown: false,
   value: "",
@@ -51,8 +59,9 @@ const defaultCellState: cellState = {
 // Colors for numbers in cells
 const colors:string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
 
-const gameStatus = ref<'playing'|'lost'|'winner'>('playing')
+const gameStatus = ref<'waiting'|'playing'|'lost'|'winner'>('playing')
 const menuIcon: {[key: string]: string} = {
+  'waiting': '😃',
   'playing': '😃',
   'lost': '💀',
   'winner': '😎'
@@ -134,14 +143,23 @@ const wonEvent = () => {
   const cellsNotShown: number = gameGrid.value.filter((obj) => !obj.isShown).length
   if (cellsNotShown === numBombs) {
     gameStatus.value = 'winner'
+    clearInterval(timerId)
   }
 }
 const lostEvent = (): void => {
+  clearInterval(timerId)
   gameStatus.value = 'lost'
   indexBombs.value.forEach((ind) => gameGrid.value[ind].isShown = true)
 }
 
 const onClick = (index: number): void => {
+
+  // Changing settings when the game starts because the user starts with a click in a cell.
+  if (gameStatus.value === 'waiting') {
+    gameStatus.value = 'playing'
+    timerId = setInterval(function () {counter.value++}, 1000)
+  }
+
   if (gameGrid.value[index].isFlagged) {
     return
   } else if (gameGrid.value[index].value === '💣') {
@@ -154,7 +172,12 @@ const onClick = (index: number): void => {
 }
 
 const setNewGame = () => {
-  gameStatus.value = 'playing'
+  gameStatus.value = 'waiting'
+
+  // Restarting chronometer
+  counter.value = 0
+  clearInterval(timerId)
+
   const emptyGrid = Array(numRows * numCols).fill(undefined).map(() => {
   // Using expansion when giving default object because when changing una key value it will
   // change every key with the same value, so we the solution is using expansion to make a copy.
@@ -254,6 +277,7 @@ setNewGame()
 }
 .box {
   display: flex;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   height: 30px;
