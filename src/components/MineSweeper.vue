@@ -161,6 +161,7 @@ const propagationClick = (index: number): void => {
 const wonEvent = () => {
   const cellsNotShown: number = gameGrid.value.filter((obj) => !obj.isShown).length
   if (cellsNotShown === numBombs) {
+    // We just add to record the game when is not custom
     if (level !== 'custom') {
       const newRecord: gameRecord = {
         level: level,
