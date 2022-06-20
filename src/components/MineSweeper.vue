@@ -37,7 +37,7 @@
     <tbody>
       <tr v-for="(record, i) in records" :key="i">
         <td>{{ i+1 }}</td>
-        <td>{{ record.level }}</td>
+        <td>{{ dictLevels[record.level] }}</td>
         <td>{{ record.time }} segundos</td>
       </tr>
     </tbody>
@@ -77,6 +77,11 @@ const defaultCellState: cellState = {
 
 // Colors for numbers in cells
 const colors:string[] = ["#0000ff", "#008100", "#ff1300", "#000083", "#810500", "#2a9494", "#000000", "#808080"]
+const dictLevels: {[key: string]: string} = {
+  'beginner': 'Principiante',
+  'intermediate': 'Intermedio',
+  'advanced': 'Avanzado'
+}
 
 const gameStatus = ref<'waiting'|'playing'|'lost'|'winner'>('playing')
 const menuIcon: {[key: string]: string} = {
