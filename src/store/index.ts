@@ -8,9 +8,15 @@ interface gameData {
   bombs: number;
 }
 
+interface gameRecord {
+  level: "beginner" | "intermediate" | "advanced";
+  time: number
+}
+
 interface StoreType {
   page: string,
-  settings: gameData
+  settings: gameData,
+  records: gameRecord[],
 }
 
 export default createStore<StoreType>({
@@ -24,7 +30,8 @@ export default createStore<StoreType>({
     }
     return {
       page: 'settings',
-      settings: settings
+      settings: settings,
+      records: []
     }
   },
   getters: {
@@ -33,6 +40,9 @@ export default createStore<StoreType>({
     },
     getCurrentIndex: (state: StoreType): string => {
       return state.settings.index
+    },
+    getCurrentLevel: (state: StoreType): string => {
+      return state.settings.level
     },
     getNumRows: (state: StoreType): number => {
       return state.settings.rows
@@ -48,18 +58,25 @@ export default createStore<StoreType>({
     },
     getCurrentPage: (state: StoreType): string => {
       return state.page
+    },
+    getTimesByLevel: (state: StoreType): gameRecord[] => {
+      const records: gameRecord[] = state.records.sort((a, b) => a.time - b.time)
+      return records
     }
   },
   mutations: {
     setSettings (state: StoreType, newSettings: gameData): void {
       state.settings = Object.assign(state.settings, newSettings)
     },
-    setCustomGame (state) {
+    setCustomGame (state: StoreType) {
       state.settings.level = 'custom'
       state.settings.index = '3'
     },
     setNewPage (state: StoreType, newPage: string) {
       state.page = newPage
+    },
+    setNewRecord (state: StoreType, newRecord: gameRecord) {
+      state.records.push(newRecord)
     }
   },
   actions: {
@@ -68,4 +85,4 @@ export default createStore<StoreType>({
   }
 })
 
-export {gameData}
+export { gameData, gameRecord }

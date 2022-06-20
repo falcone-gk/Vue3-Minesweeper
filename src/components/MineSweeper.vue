@@ -25,13 +25,30 @@
         <span v-if="gameGrid[index-1].isShown" :style="colorStyle(index-1)">{{ gameGrid[index-1].value }}</span>
       </div>
     </div>
-    <button @click.prevent="goToSetup">Configuración</button>
   </div>
+  <table v-if="records.length">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Dificultad</th>
+        <th>Tiempo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(record, i) in records" :key="i">
+        <td>{{ i+1 }}</td>
+        <td>{{ record.level }}</td>
+        <td>{{ record.time }} segundos</td>
+      </tr>
+    </tbody>
+  </table>
+  <button @click.prevent="goToSetup">Configuración</button>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
+import { gameRecord } from '../store/index'
 import rangeRandomSample from '../common/RandomSample'
 import getAllPossibleDirections from '../common/Directions'
 
@@ -42,9 +59,11 @@ interface cellState {
 }
 
 const store = useStore()
+const level = store.getters.getCurrentLevel
 const numRows = store.getters.getNumRows
 const numCols = store.getters.getNumCols
 const numBombs = store.getters.getNumBombs
+const records = computed<gameRecord[]>(() => store.getters.getTimesByLevel)
 
 // Chronometer elements
 const counter = ref<number>(0)
@@ -142,6 +161,14 @@ const propagationClick = (index: number): void => {
 const wonEvent = () => {
   const cellsNotShown: number = gameGrid.value.filter((obj) => !obj.isShown).length
   if (cellsNotShown === numBombs) {
+    if (level !== 'custom') {
+      const newRecord: gameRecord = {
+        level: level,
+        time: counter.value
+      }
+      store.commit('setNewRecord', newRecord)
+    }
+
     gameStatus.value = 'winner'
     clearInterval(timerId)
   }
@@ -310,5 +337,8 @@ setNewGame()
   background: #bdbdbd;
   border: solid #999;
   border-width: 2px 0 0 2px;
+}
+table {
+  padding: 1em 0;
 }
 </style>
