@@ -57,7 +57,14 @@ const handleSelect = (event: Event): void => {
 }
 
 const isDisabled = (): boolean => !(currentSettings.value.index==="3")
-const goToGame = () => store.commit('setNewPage', 'game')
+const goToGame = () => {
+  const totalCells: number = currentSettings.value.rows * currentSettings.value.cols
+  if (totalCells <= currentSettings.value.bombs) {
+    alert('Configuración no posible')
+  } else {
+    store.commit('setNewPage', 'game')
+  }
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
