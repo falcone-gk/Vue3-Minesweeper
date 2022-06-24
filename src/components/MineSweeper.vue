@@ -42,13 +42,14 @@
       </tr>
     </tbody>
   </table>
-  <button @click.prevent="goToSetup">Configuración</button>
+  <PageButton value="Configuración" :event="goToSetup" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
 import { gameRecord } from '../store/index'
+import PageButton from './elements/PageButton.vue'
 import rangeRandomSample from '../common/RandomSample'
 import getAllPossibleDirections from '../common/Directions'
 
@@ -253,6 +254,7 @@ setNewGame()
 .game {
   background-color: lightgray;
   padding: 2px;
+  margin-bottom: 1em;
 }
 .menu {
   display: flex;

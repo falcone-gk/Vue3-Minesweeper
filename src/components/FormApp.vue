@@ -2,34 +2,33 @@
   <div class="config-game">
     <h1>Configuración del juego:</h1>
     <form>
-      <div class="form-group">
-        <label for="level">Nivel del juego:</label>
-          <select class="form-control" v-model="currentSettings.index" @change.prevent="handleSelect" name="level" id="level">
+      <div style="display: flex">
+        <label style="flex: 1 1 auto" for="level">Nivel del juego:</label>
+        <select id="level" name="level" v-model="currentSettings.index" @change.prevent="handleSelect">
           <option value="0">Principiante</option>
           <option value="1">Intermedio</option>
           <option value="2">Avanzado</option>
           <option value="3">Personalizado</option>
         </select>
       </div>
-      <div class="custom-form">
-        <div class="form-group">
-          <label for="rows">N° de filas:</label>
-          <input class="form-control" type="number" name="rows" v-model="currentSettings.rows" :disabled="isDisabled()" @click.prevent="" />
-        </div>
-        <div class="form-group">
-          <label for="cols">N° de columnas:</label>
-          <input class="form-control" type="number" name="cols" v-model="currentSettings.cols" :disabled="isDisabled()" @click.prevent="" />
-        </div>
-        <div class="form-group">
-          <label for="bombs">N° de bombas:</label>
-          <input class="form-control" type="number" name="bombs" v-model="currentSettings.bombs" :disabled="isDisabled()" @click.prevent="" />
-        </div>
-        <div class="div-btn">
-          <button id="update-btn" @click.prevent="goToGame">
-            Actualizar
-          </button>
-        </div>
+      <div class="group-forms">
+        <FormGroup
+        label="N° de filas"
+        name="row"
+        v-model:digit="currentSettings.rows"
+        :isDisabled="isDisabled()" />
+        <FormGroup
+        label="N° de columnas"
+        name="cols"
+        v-model:digit="currentSettings.cols"
+        :isDisabled="isDisabled()" />
+        <FormGroup
+        label="N° de bombas"
+        name="bombs"
+        v-model:digit="currentSettings.bombs"
+        :isDisabled="isDisabled()" />
       </div>
+      <PageButton value="Actualizar" :event="goToGame" />
     </form>
   </div>
 </template>
@@ -38,6 +37,9 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { gameData } from '../store/index'
+import PageButton from './elements/PageButton.vue'
+import FormGroup from './elements/FormGroup.vue'
+
 const store = useStore()
 
 const defaultLevels: gameData[] = [
@@ -72,33 +74,10 @@ const goToGame = () => {
 .config-game {
   width: min(100%, 350px);
 }
-
 .config-game h1 {
   font-size: 25px;
 }
-
-.custom-form input[type=number] {
-  width: 50px;
-}
-
-.form-group {
-  display: flex;
-  margin: 4px 0;
-}
-
-.form-group label {
-  flex: 1 1 auto;
-}
-
-.div-btn {
-  display: flex;
-  margin-top: 2em;
-}
-
-#update-btn {
-  margin-left: auto;
-  margin-right: auto;
-  padding: .5em 40px;
-  font-size: 15px;
+.group-forms {
+  margin-bottom: 2em;
 }
 </style>
