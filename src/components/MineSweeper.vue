@@ -27,7 +27,7 @@
     </div>
   </div>
   <table v-if="records.length">
-    <thead>
+    <thead align="left">
       <tr>
         <th>N°</th>
         <th>Dificultad</th>
@@ -348,5 +348,7 @@ setNewGame()
 }
 table {
   padding: 1em 0;
+  border-collapse: separate;
+  border-spacing: 5px 0;
 }
 </style>

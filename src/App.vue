@@ -1,4 +1,7 @@
 <template>
+  <div class="title">
+    <h1>Buscaminas</h1>
+  </div>
   <MineSweeper v-if="currentPage == 'game'"/>
   <FormApp v-if="currentPage=='settings'" />
 </template>
