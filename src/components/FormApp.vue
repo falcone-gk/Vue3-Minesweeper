@@ -1,6 +1,6 @@
 <template>
   <div class="config-game">
-    <h1>Configuración del juego:</h1>
+    <h2>Configuración del juego:</h2>
     <form>
       <div style="display: flex">
         <label style="flex: 1 1 auto" for="level">Nivel del juego:</label>
@@ -73,9 +73,6 @@ const goToGame = () => {
 <style scoped>
 .config-game {
   width: min(100%, 350px);
-}
-.config-game h1 {
-  font-size: 25px;
 }
 .group-forms {
   margin-bottom: 2em;
