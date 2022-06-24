@@ -349,6 +349,6 @@ setNewGame()
 table {
   padding: 1em 0;
   border-collapse: separate;
-  border-spacing: 5px 0;
+  border-spacing: 1em 0;
 }
 </style>

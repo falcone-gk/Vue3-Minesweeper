@@ -1,6 +1,6 @@
 <template>
   <div class="title">
-    <h1>Buscaminas</h1>
+    <h1>Buscaminas 💣</h1>
   </div>
   <MineSweeper v-if="currentPage == 'game'"/>
   <FormApp v-if="currentPage=='settings'" />
@@ -22,10 +22,9 @@ const currentPage = computed(() => store.getters.getCurrentPage)
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  margin-right: -50%;
-  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
 }
 </style>
