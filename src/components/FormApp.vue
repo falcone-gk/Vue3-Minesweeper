@@ -28,7 +28,7 @@
         v-model:digit="currentSettings.bombs"
         :isDisabled="isDisabled()" />
       </div>
-      <PageButton value="Actualizar" :event="goToGame" />
+      <PageButton value="Jugar" :event="goToGame" />
     </form>
   </div>
 </template>

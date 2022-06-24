@@ -4,6 +4,7 @@
     <input
     class="form-control"
     type="number"
+    min="1"
     :name="props.name"
     :value="digit"
     @input="handleChange"
